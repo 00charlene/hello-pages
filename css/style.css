@@ -17,6 +17,10 @@
 
 *{box-sizing:border-box}
 
+/* hidden 屬性必須贏過下面那些 display:grid / display:flex 的規則，
+   否則 .modal、.btn-row 這類元素就算加了 hidden 還是會顯示出來。 */
+[hidden]{display:none !important}
+
 body{
   margin:0;
   font-family:var(--font);
