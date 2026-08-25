@@ -3,7 +3,8 @@
 一個純靜態的單字學習網站。可以自己打單字、拍照讓 AI 找出單字、在照片上框選看不懂的地方請 AI 辨識，
 最後在複習區用間隔複習法把它們背起來。
 
-沒有後端、沒有 build 步驟、沒有 npm —— 檔案 push 上去就是網站。
+沒有後端、沒有 build 步驟 —— 檔案 push 上去就是網站。（repo 裡的 `package.json` 只給開發時跑測試用，
+網站本身不依賴任何套件。）
 
 ## 功能
 
@@ -61,13 +62,55 @@ css/style.css     樣式
 js/store.js       資料層：localStorage、去重、間隔複習排程、匯出匯入
 js/ai.js          呼叫 Claude API、圖片縮放／裁切、結構化輸出的 schema 與提示語
 js/app.js         介面邏輯：分頁、表單、照片框選、列表、複習、設定
+
+CLAUDE.md         給 AI 助理讀的專案說明（架構決定、易踩的坑）
+package.json      只給測試用；網站本身不需要任何相依套件
+test/e2e.js       Playwright 流程測試
+test/fixtures/    測試用的範例圖片
 ```
+
+網站本身只需要 `index.html` + `css/` + `js/`，其餘都是開發用的。
+
+## 開發與測試
+
+網站本身不用裝任何東西。本機預覽起一個 server 就好（直接開檔案也能跑，但行為和線上略有差異）：
+
+```bash
+npm run serve     # http://localhost:8000
+```
+
+流程測試用 Playwright 開真的 Chromium 跑完整使用者流程 —— 新增單字、上傳照片、
+拖曳框選、AI 辨識、加入單字庫、複習一輪、重新載入確認資料還在，外加 iPhone 尺寸與觸控拖曳：
+
+```bash
+npm run setup      # 只需第一次：安裝 playwright + chromium
+npm test           # 測本機檔案（會自己開臨時 server）
+npm run test:live  # 測已上線的網站
+```
+
+有設 `ANTHROPIC_API_KEY` 環境變數時會連同 AI 辨識一起測（真的呼叫 API 約 3 次，成本不到 US$0.05）；
+沒設就自動跳過那幾項，其餘照跑。截圖會輸出到 `test/screenshots/`。
+
+**改完 CSS 或版面請務必跑一次。** 這個專案目前最嚴重的 bug 是 CSS 優先序造成的
+（`.modal{display:grid}` 蓋過瀏覽器內建的 `[hidden]{display:none}`，讓編輯彈窗蓋住整個畫面），
+而這種問題只有真實瀏覽器抓得到。
+
+## 已知限制
+
+- **單字只存在這一台裝置的這一個瀏覽器**，不會跨裝置同步。換裝置請用匯出／匯入 JSON。
+- **AI 功能需要使用者自備 API key**，而 key 存在瀏覽器裡（原因與風險見上面那節）。
+- **照片辨識不保證完全正確。** 字太小、太模糊、傾斜或手寫時可能漏字或誤判；
+  框到一半被切斷的字，Claude 會在備註標明是推測的。加入單字庫前建議看一下候選清單。
+- **拍很糊的照片不會變清楚。** 送出前圖片會被壓到長邊 1600px 以內以控制成本，
+  原圖太糊的話結果一樣糊 —— 框小範圍會比掃整張圖準，因為小區域會被放大處理。
+- 一次最多框 12 個區域、批次貼上一次最多 60 個字。
 
 ## 部署
 
 Settings → Pages → Source 選 `main` 分支的根目錄即可。沒有 build step，push 完等一下就更新。
 
-本機測試建議起一個 server（`python3 -m http.server`）而不是直接開檔案，行為比較接近線上。
+根目錄的 `.nojekyll` 會讓 GitHub 跳過 Jekyll 處理，直接把檔案原樣送出（純靜態站不需要 Jekyll，
+跳過比較快也少一個出錯的環節）。
 
 ## 用到的 API
 

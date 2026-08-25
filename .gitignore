@@ -1,0 +1,10 @@
+# 開發用相依套件（網站本身不需要）
+node_modules
+
+# 測試產出
+test/screenshots/
+
+# 編輯器與系統雜項
+.DS_Store
+*.swp
+.vscode/

@@ -1,0 +1,15 @@
+{
+  "name": "vocab-practice",
+  "version": "1.0.0",
+  "private": true,
+  "description": "單字練習室 —— 純靜態的單字學習網站；這份 package.json 只給開發用的測試，網站本身不需要任何建置",
+  "scripts": {
+    "test": "node test/e2e.js",
+    "test:live": "SITE=https://00charlene.github.io/hello-pages/ node test/e2e.js",
+    "serve": "python3 -m http.server 8000",
+    "setup": "npm install && npx playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}
