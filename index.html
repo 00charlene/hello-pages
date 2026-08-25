@@ -3,18 +3,348 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>我的第一個網站</title>
-<style>
-body{font-family:system-ui,"Microsoft JhengHei",sans-serif;display:grid;
-place-items:center;min-height:100vh;margin:0;background:#141414;color:#fff}
-h1{font-size:3rem;margin:0 0 .5rem}
-p{color:#9a9a9a}
-</style>
+<title>單字練習室</title>
+<meta name="description" content="用打字或拍照建立自己的單字庫，並用間隔複習法背起來。">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">單</span>
+    <div>
+      <h1>單字練習室</h1>
+      <p class="sub">打字新增、拍照辨識、框選提問，最後在複習區把它們背起來。</p>
+    </div>
+  </div>
+  <div class="counters">
+    <div class="counter"><b id="statTotal">0</b><span>總單字</span></div>
+    <div class="counter"><b id="statDue">0</b><span>待複習</span></div>
+    <div class="counter"><b id="statMastered">0</b><span>已掌握</span></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab is-active" data-tab="add">✍️ 新增單字</button>
+  <button class="tab" data-tab="photo">📷 照片辨識</button>
+  <button class="tab" data-tab="list">📚 我的單字</button>
+  <button class="tab" data-tab="review">🎯 複習</button>
+  <button class="tab" data-tab="settings">⚙️ 設定</button>
+</nav>
+
 <main>
-<h1>Hello, GitHub Pages</h1>
-<p>這是我的第一個 repo,也是我的第一個上線網站。</p>
+
+<!-- ─────────────── 新增單字 ─────────────── -->
+<section class="panel is-active" data-panel="add">
+  <div class="grid-2">
+
+    <div class="card">
+      <h2>單筆新增</h2>
+      <p class="hint">只填「單字」也可以，按「AI 幫我補齊」讓 Claude 補上音標、詞性、釋義和例句。</p>
+      <div class="field">
+        <label for="fWord">單字 / 片語 <span class="req">*</span></label>
+        <input id="fWord" type="text" placeholder="例如：resilient" autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fPhonetic">音標</label>
+          <input id="fPhonetic" type="text" placeholder="/rɪˈzɪl.i.ənt/">
+        </div>
+        <div class="field field-narrow">
+          <label for="fPos">詞性</label>
+          <input id="fPos" type="text" placeholder="adj.">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fMeaning">意思</label>
+        <input id="fMeaning" type="text" placeholder="有韌性的；能快速恢復的">
+      </div>
+      <div class="field">
+        <label for="fExample">例句</label>
+        <textarea id="fExample" rows="2" placeholder="She is remarkably resilient after the setback."></textarea>
+      </div>
+      <div class="field">
+        <label for="fExampleZh">例句翻譯</label>
+        <textarea id="fExampleZh" rows="2" placeholder="經歷挫折後她的恢復力驚人。"></textarea>
+      </div>
+      <div class="field">
+        <label for="fNote">備註</label>
+        <input id="fNote" type="text" placeholder="名詞是 resilience">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnSaveOne">加入單字庫</button>
+        <button class="btn" id="btnEnrichOne">✨ AI 幫我補齊</button>
+        <button class="btn btn-ghost" id="btnClearOne">清空</button>
+      </div>
+      <p class="status" id="statusOne"></p>
+    </div>
+
+    <div class="card">
+      <h2>批次貼上</h2>
+      <p class="hint">一行一個單字。可以只貼單字，也可以用 <code>單字 = 意思</code> 的格式自己寫意思。</p>
+      <div class="field">
+        <label for="fBulk">單字清單</label>
+        <textarea id="fBulk" rows="12" placeholder="resilient
+ambiguous = 模稜兩可的
+take for granted
+mitigate"></textarea>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="bulkEnrich" checked>
+        <span>用 AI 補齊音標、詞性、釋義與例句（需要 API key）</span>
+      </label>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnSaveBulk">全部加入</button>
+        <button class="btn btn-ghost" id="btnClearBulk">清空</button>
+      </div>
+      <p class="status" id="statusBulk"></p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─────────────── 照片辨識 ─────────────── -->
+<section class="panel" data-panel="photo">
+  <div class="card">
+    <h2>從照片抓單字</h2>
+    <p class="hint">
+      上傳課本、講義或路標的照片。可以讓 AI 掃描整張圖，也可以自己在圖上
+      <b>拖曳框選</b>不會的字，只問框裡面的內容。
+    </p>
+
+    <div class="btn-row">
+      <label class="btn btn-primary" for="fPhoto">選擇照片 / 拍照</label>
+      <input id="fPhoto" type="file" accept="image/*" hidden>
+      <button class="btn" id="btnClearBoxes" disabled>清除所有框</button>
+      <button class="btn btn-ghost" id="btnDropPhoto" disabled>移除照片</button>
+    </div>
+
+    <div id="photoEmpty" class="empty">
+      <p>還沒有照片。</p>
+      <p class="hint">支援 JPG / PNG / GIF / WebP，單張上限 10 MB。</p>
+    </div>
+
+    <div id="photoStage" class="stage" hidden>
+      <div class="img-wrap" id="imgWrap">
+        <img id="photoImg" alt="待辨識的照片">
+        <div class="box-layer" id="boxLayer"></div>
+      </div>
+      <p class="hint" id="boxHint">在圖片上按住並拖曳，就能框出一個區域；框好後按下方按鈕送給 AI。</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnScanAll">🔍 掃描整張圖</button>
+        <button class="btn btn-primary" id="btnScanBoxes" disabled>🎯 只辨識框選區域 (<span id="boxCount">0</span>)</button>
+      </div>
+      <p class="status" id="statusPhoto"></p>
+    </div>
+  </div>
+
+  <div class="card" id="candCard" hidden>
+    <h2>辨識結果</h2>
+    <p class="hint">勾掉不想要的，剩下的按「加入單字庫」。文字可以直接點進去修改。</p>
+    <div class="btn-row btn-row-tight">
+      <button class="btn btn-sm" id="btnCandAll">全選</button>
+      <button class="btn btn-sm" id="btnCandNone">全不選</button>
+    </div>
+    <div id="candList" class="cand-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnCandSave">加入單字庫</button>
+      <button class="btn btn-ghost" id="btnCandDrop">丟掉這批結果</button>
+    </div>
+    <p class="status" id="statusCand"></p>
+  </div>
+</section>
+
+<!-- ─────────────── 我的單字 ─────────────── -->
+<section class="panel" data-panel="list">
+  <div class="card">
+    <div class="list-toolbar">
+      <input type="search" id="qSearch" placeholder="搜尋單字、意思、例句…">
+      <select id="qFilter">
+        <option value="all">全部</option>
+        <option value="due">今天要複習</option>
+        <option value="new">還沒複習過</option>
+        <option value="learning">學習中</option>
+        <option value="mastered">已掌握</option>
+      </select>
+      <select id="qSort">
+        <option value="new">最近加入</option>
+        <option value="old">最早加入</option>
+        <option value="az">字母 A→Z</option>
+        <option value="due">複習到期日</option>
+        <option value="weak">最不熟</option>
+      </select>
+    </div>
+    <p class="hint" id="listCount"></p>
+    <div id="wordList" class="word-list"></div>
+    <div class="btn-row">
+      <button class="btn" id="btnExport">⬇️ 匯出 JSON</button>
+      <label class="btn" for="fImport">⬆️ 匯入 JSON</label>
+      <input id="fImport" type="file" accept="application/json,.json" hidden>
+      <button class="btn btn-danger btn-ghost" id="btnWipe">清空整個單字庫</button>
+    </div>
+    <p class="status" id="statusList"></p>
+  </div>
+</section>
+
+<!-- ─────────────── 複習 ─────────────── -->
+<section class="panel" data-panel="review">
+
+  <div class="card" id="reviewSetup">
+    <h2>開始複習</h2>
+    <p class="hint">採用間隔複習：答對的字下次會晚一點再出現，答錯的字很快就會再遇到。</p>
+    <div class="field-row">
+      <div class="field">
+        <label for="rMode">題型</label>
+        <select id="rMode">
+          <option value="en2zh">看英文，想中文</option>
+          <option value="zh2en">看中文，想英文</option>
+          <option value="spell">看中文，拼出英文</option>
+          <option value="mixed">混合出題</option>
+        </select>
+      </div>
+      <div class="field field-narrow">
+        <label for="rSize">這輪題數</label>
+        <select id="rSize">
+          <option>10</option>
+          <option selected>20</option>
+          <option>30</option>
+          <option>50</option>
+        </select>
+      </div>
+      <div class="field field-narrow">
+        <label for="rScope">範圍</label>
+        <select id="rScope">
+          <option value="due">只考到期的</option>
+          <option value="all">全部單字</option>
+          <option value="weak">最不熟的</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnStartReview">開始</button>
+    </div>
+    <p class="status" id="statusReview"></p>
+  </div>
+
+  <div class="card" id="reviewStage" hidden>
+    <div class="quiz-head">
+      <div class="progress"><div class="progress-bar" id="rBar"></div></div>
+      <span class="quiz-count" id="rCount">1 / 20</span>
+      <button class="btn btn-sm btn-ghost" id="btnQuitReview">結束這輪</button>
+    </div>
+
+    <div class="quiz-card">
+      <p class="quiz-label" id="rPrompt">請回想這個字的意思</p>
+      <p class="quiz-front" id="rFront">—</p>
+
+      <div id="rSpellWrap" hidden>
+        <input id="rSpellInput" type="text" autocomplete="off" autocapitalize="off"
+               spellcheck="false" placeholder="拼出這個字…">
+      </div>
+
+      <div class="quiz-back" id="rBack" hidden></div>
+    </div>
+
+    <div class="btn-row" id="rRevealRow">
+      <button class="btn btn-primary" id="btnReveal">顯示答案</button>
+    </div>
+    <div class="btn-row" id="rGradeRow" hidden>
+      <button class="btn btn-bad" id="btnWrong">✗ 還不熟</button>
+      <button class="btn btn-good" id="btnRight">✓ 我記得</button>
+    </div>
+  </div>
+
+  <div class="card" id="reviewDone" hidden>
+    <h2>這輪結束 🎉</h2>
+    <p class="score" id="rScore"></p>
+    <div id="rMissed"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnAgain">再來一輪</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ─────────────── 設定 ─────────────── -->
+<section class="panel" data-panel="settings">
+  <div class="card">
+    <h2>Claude API 設定</h2>
+    <p class="hint">
+      照片辨識和 AI 補齊會直接從你的瀏覽器呼叫 Claude API，所以需要你自己的 API key。
+      到 <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a> 建立一組，貼進來即可。
+    </p>
+    <div class="warn">
+      <b>安全提醒：</b>key 會存在這台裝置的瀏覽器 localStorage 裡，
+      任何能操作這個瀏覽器的人、或這個頁面上的任何腳本都讀得到。
+      請用一組專門給這個網站的 key、在 Console 設好用量上限，不要用公司或正式產品的 key。
+    </div>
+    <div class="field">
+      <label for="fKey">API key</label>
+      <div class="field-row">
+        <input id="fKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+        <button class="btn btn-sm" id="btnPeekKey" type="button">顯示</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="fModel">模型</label>
+        <select id="fModel"></select>
+      </div>
+      <div class="field field-narrow">
+        <label for="fLearn">學習語言</label>
+        <input id="fLearn" type="text" placeholder="英文">
+      </div>
+      <div class="field field-narrow">
+        <label for="fNative">你的母語</label>
+        <input id="fNative" type="text" placeholder="繁體中文">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnSaveCfg">儲存設定</button>
+      <button class="btn" id="btnTestCfg">測試連線</button>
+      <button class="btn btn-ghost btn-danger" id="btnForgetKey">忘記這組 key</button>
+    </div>
+    <p class="status" id="statusCfg"></p>
+  </div>
+
+  <div class="card">
+    <h2>資料存在哪裡</h2>
+    <p class="hint">
+      所有單字都存在這個瀏覽器的 localStorage，不會上傳到任何伺服器（只有你送去辨識的照片會傳給 Claude API）。
+      換裝置或清瀏覽器資料前，記得先到「我的單字」把 JSON 匯出來。
+    </p>
+    <p class="hint">目前佔用空間：<b id="statBytes">—</b></p>
+  </div>
+</section>
+
 </main>
+
+<!-- 編輯單字用的彈窗 -->
+<div class="modal" id="editModal" hidden>
+  <div class="modal-box">
+    <h2>編輯單字</h2>
+    <div class="field"><label for="eWord">單字</label><input id="eWord" type="text"></div>
+    <div class="field-row">
+      <div class="field"><label for="ePhonetic">音標</label><input id="ePhonetic" type="text"></div>
+      <div class="field field-narrow"><label for="ePos">詞性</label><input id="ePos" type="text"></div>
+    </div>
+    <div class="field"><label for="eMeaning">意思</label><input id="eMeaning" type="text"></div>
+    <div class="field"><label for="eExample">例句</label><textarea id="eExample" rows="2"></textarea></div>
+    <div class="field"><label for="eExampleZh">例句翻譯</label><textarea id="eExampleZh" rows="2"></textarea></div>
+    <div class="field"><label for="eNote">備註</label><input id="eNote" type="text"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnEditSave">儲存</button>
+      <button class="btn" id="btnEditEnrich">✨ AI 補齊</button>
+      <button class="btn btn-ghost" id="btnEditCancel">取消</button>
+    </div>
+    <p class="status" id="statusEdit"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/store.js" defer></script>
+<script src="js/ai.js" defer></script>
+<script src="js/app.js" defer></script>
 </body>
 </html>
